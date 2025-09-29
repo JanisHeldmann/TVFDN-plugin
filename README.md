@@ -41,7 +41,7 @@ The graphical user interface includes the following sliders and buttons, which a
 
 Toggling the TV Bypassed button ON might induce the reverberation enhancement system into instability.
 
-Toggling the Absorption button ON might induce the TVFDN itself into instability, and most definitely will induce the reverberation enhancement system into instability.
+Toggling the Absorption button ON will make the TVFDN lossless, and thus it will induce the reverberation enhancement system into instability.
 
 ---
 
