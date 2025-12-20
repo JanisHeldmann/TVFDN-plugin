@@ -1,4 +1,4 @@
-s# TVFDN-plugin
+# TVFDN-plugin
 ### Real-time audio plugin implementing a Time-Varying Feedback Delay Network.
 
 ---
