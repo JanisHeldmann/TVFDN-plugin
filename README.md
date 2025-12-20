@@ -1,4 +1,4 @@
-# TVFDN-plugin
+s# TVFDN-plugin
 ### Real-time audio plugin implementing a Time-Varying Feedback Delay Network.
 
 ---
@@ -7,7 +7,7 @@
 
 The plugin is a Time-Varying Feedback Delay Network (TVFDN) for real-time multichannel audio signal processing[1].
 
-![](imgs/digital-circuit.png)
+<img src="imgs/digital-circuit.png" alt="digital circuit" width="500"/>
 
 The TVFDN has the following features:
 - Order 64 &rarr; it receives 64 input channels and it produces 64 output channels
