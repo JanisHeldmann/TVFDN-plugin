@@ -7,7 +7,7 @@ s# TVFDN-plugin
 
 The plugin is a Time-Varying Feedback Delay Network (TVFDN) for real-time multichannel audio signal processing[1].
 
-<img src="imgs/digital-circuit.png" alt="digital circuit" width="500"/>
+<img src="imgs/digital-circuit.png" alt="digital circuit" width="700"/>
 
 The TVFDN has the following features:
 - Order 64 &rarr; it receives 64 input channels and it produces 64 output channels
@@ -23,6 +23,7 @@ The implemention is done with the use of the [JUCE](https://github.com/juce-fram
 ## Interface
 
 ![](imgs/interface.png)
+<img src="imgs/interface.png" alt="plugin interface" width="700"/>
 
 The graphical user interface includes the following sliders and buttons, which affect the TVFDN behaviour:
 
@@ -35,9 +36,9 @@ The graphical user interface includes the following sliders and buttons, which a
 | Delay_Factor          | Scalar value applied to the length of the delay lines of the FDN. Changing it changes the perceived volume of the room that the reverberator is emulating |
 | Frequency Spread      | Adds randomization to how the oscillation of the eigenvalues of the feedback matrix of the FDN change in time |
 | TV Bypassed           | It activates the bypass of the time variation inside the FDN |
-| Absorption            | It activates the bypass of the absorption filters in the FDN. **When toggled on, the FDN becomes lossless**^*|
+| Absorption            | It activates the bypass of the absorption filters in the FDN. **When toggled on, the FDN becomes lossless**^*^|
 
-^* The reverberation of a lossless FDN will not decay in time. Please be careful when using this function.
+^*^ The reverberation of a lossless FDN will not decay in time. Please be careful when using this function.
 
 ---
 
