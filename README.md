@@ -24,10 +24,8 @@ The implemention is done with the use of the [JUCE](https://github.com/juce-fram
 
 <img src="imgs/interface.png" alt="plugin interface" width="600"/>
 
-The graphical user interface includes the following sliders and buttons, which affect the TVFDN behaviour:
-
 |       Parameter       |                         Description                        |
-|-----------------------|------------------------------------------------------------|
+|:---------------------:|------------------------------------------------------------|
 | RT_DC                 | Reverberation time (in seconds) at direct component. The direct component is 0 Hz. This value is valid for all frequencies from 0 Hz to the crossover frequency |
 | RT_NY                 | Reverberation time (in seconds) at Nyquist frequency. The Nyquist frequency is half of the sampling frequency. This value is valid for all frequencies from the crossover frequency to the Nyquist frequency |
 | RT_CrossOverFrequency | Crossover frequency (in Hz) for the reverberation time profile over frequency |
