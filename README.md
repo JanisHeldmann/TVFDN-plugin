@@ -1,13 +1,11 @@
 # TVFDN-plugin
 ### Real-time audio plugin implementing a Time-Varying Feedback Delay Network.
 
-Please, read carefully the *Interface* section for a description of the graphical user interface and to avoid undesired/dangerous behaviour of the plugin.
-
 ---
 
 ## Description
 
-The plugin is an implementation of a time-varying feedback delay network (TVFDN) for real-time multichannel audio processing[1].
+The plugin is a Time-Varying Feedback Delay Network (TVFDN) for real-time multichannel audio signal processing[1].
 
 ![](imgs/digital-circuit.png)
 
@@ -28,20 +26,18 @@ The implemention is done with the use of the [JUCE](https://github.com/juce-fram
 
 The graphical user interface includes the following sliders and buttons, which affect the TVFDN behaviour:
 
-- RT_DC: reverberation time at 0 Hz
-- RT_NY: reverberation time at Nyquist frequency
-- RT_CrossOverFrequency: crossover frequency of the reverberation time profile defining the chance between the RT_CD value and the RT_NY value
-- Osc_Frequency: affects the frequency with which the poles of the TVFDN oscillate
-- Delay_Factor: scalar multiplier applied to the delay lines
-- Frequency Spread: affects the oscillation functions defining the oscillation of the poles of the TVFDN, it adds randomness to prevent the synchronization of the poles' movement
-- TV Bypassed: when toggled ON, the time variance is bypassed, and the feedback matrix of the FDN is static, thus the FDN itself is static
-- Absorption: when toggled ON, the absorption filters are bypassed, thus the TVFDN is lossless
+|     Parameter    |                         Description                        |
+|------------------|------------------------------------------------------------|
+|      RT_DC       | Reverberation time (in seconds) at direct component. The direct component is 0 Hz. This value is valid for all frequencies from 0 Hz to the crossover frequency |
+|      RT_NY       | Reverberation time (in seconds) at Nyquist frequency. The Nyquist frequency is half of the sampling frequency. This value is valid for all frequencies from the crossover frequency to the Nyquist frequency |
+| RT_CrossOverFrequency | Crossover frequency (in Hz) for the reverberation time profile over frequency |
+| Osc_Frequency         | It is the frequency offset (in Hz) with which the eigenvalues of the feedback matrix of the FDN oscillate in time |
+| Delay_Factor          | Scalar value applied to the length of the delay lines of the FDN. Changing it changes the perceived volume of the room that the reverberator is emulating |
+| Frequency Spread      | Adds randomization to how the oscillation of the eigenvalues of the feedback matrix of the FDN change in time |
+| TV Bypassed           | It activates the bypass of the time variation inside the FDN |
+| Absorption            | It activates the bypass of the absorption filters in the FDN. **When toggled on, the FDN becomes lossless**^* |
 
-*Please, be careful when toggling the TV Bypassed or the Absorption buttons.*
-
-Toggling the TV Bypassed button ON might induce the reverberation enhancement system into instability.
-
-Toggling the Absorption button ON will make the TVFDN lossless, and thus it will induce the reverberation enhancement system into instability.
+[^*] The reverberation of a lossless FDN will not decay in time. Please be careful when using this function.
 
 ---
 
