@@ -22,8 +22,7 @@ The implemention is done with the use of the [JUCE](https://github.com/juce-fram
 
 ## Interface
 
-![](imgs/interface.png)
-<img src="imgs/interface.png" alt="plugin interface" width="700"/>
+<img src="imgs/interface.png" alt="plugin interface" width="600"/>
 
 The graphical user interface includes the following sliders and buttons, which affect the TVFDN behaviour:
 
