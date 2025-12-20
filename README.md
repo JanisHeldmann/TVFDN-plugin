@@ -35,9 +35,9 @@ The graphical user interface includes the following sliders and buttons, which a
 | Delay_Factor          | Scalar value applied to the length of the delay lines of the FDN. Changing it changes the perceived volume of the room that the reverberator is emulating |
 | Frequency Spread      | Adds randomization to how the oscillation of the eigenvalues of the feedback matrix of the FDN change in time |
 | TV Bypassed           | It activates the bypass of the time variation inside the FDN |
-| Absorption            | It activates the bypass of the absorption filters in the FDN. **When toggled on, the FDN becomes lossless**[^*]|
+| Absorption            | It activates the bypass of the absorption filters in the FDN. **When toggled on, the FDN becomes lossless**^*|
 
-[^*]: The reverberation of a lossless FDN will not decay in time. Please be careful when using this function.
+^* The reverberation of a lossless FDN will not decay in time. Please be careful when using this function.
 
 ---
 
