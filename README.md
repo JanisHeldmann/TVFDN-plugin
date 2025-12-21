@@ -3,6 +3,12 @@
 
 ---
 
+The compiled versions (.dll and .vst) can be downloaded in the *Releases* section.
+
+The source code will be available in the future.
+
+---
+
 ## Description
 
 The plugin is a Time-Varying Feedback Delay Network (TVFDN) for real-time multichannel audio signal processing[1].
