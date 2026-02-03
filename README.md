@@ -5,7 +5,7 @@
 
 The compiled versions (.dll and .vst) can be downloaded in the *Releases* section.
 
-The source code will be available in the future.
+The source code is available in the `./source/` folder.
 
 ---
 
