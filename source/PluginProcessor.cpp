@@ -122,7 +122,9 @@ void GlivelabPlugin64AudioProcessor::releaseResources()
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool GlivelabPlugin64AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
-    return true;
+    const auto channels = juce::AudioChannelSet::discreteChannels (64);
+    return layouts.getMainInputChannelSet() == channels
+        && layouts.getMainOutputChannelSet() == channels;
 
 }
 #endif
@@ -169,15 +171,15 @@ juce::AudioProcessorEditor* GlivelabPlugin64AudioProcessor::createEditor()
 //==============================================================================
 void GlivelabPlugin64AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    if (auto xml = apvts.copyState().createXml())
+        copyXmlToBinary (*xml, destData);
 }
 
 void GlivelabPlugin64AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    if (auto xml = getXmlFromBinary (data, sizeInBytes))
+        if (xml->hasTagName (apvts.state.getType()))
+            apvts.replaceState (juce::ValueTree::fromXml (*xml));
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout GlivelabPlugin64AudioProcessor::createParameterLayout()
