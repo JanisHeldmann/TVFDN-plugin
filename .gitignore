@@ -42,3 +42,6 @@
 
 # Mac specific
 .DS_Store
+
+# CMake build output
+/build/
