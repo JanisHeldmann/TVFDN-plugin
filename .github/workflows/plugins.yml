@@ -97,8 +97,9 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           ctest --test-dir build -C Release --output-on-failure
-          mkdir -p "$HOME/Library/Audio/Plug-Ins/Components"
-          ditto 'build/TVFDN_artefacts/Release/AU/TVFDN 64.component' "$HOME/Library/Audio/Plug-Ins/Components/TVFDN 64.component"
+          sudo mkdir -p /Library/Audio/Plug-Ins/Components
+          sudo ditto 'build/TVFDN_artefacts/Release/AU/TVFDN 64.component' '/Library/Audio/Plug-Ins/Components/TVFDN 64.component'
+          killall AudioComponentRegistrar || true
           auval -v aufx Tv64 Tvfn -strict
           clang++ -std=c++17 plugin/tests/au-smoke.cpp -framework AudioToolbox -o au-smoke
           ./au-smoke
