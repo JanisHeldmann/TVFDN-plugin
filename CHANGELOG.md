@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Build Windows x64 VST3 and universal macOS AU/VST3 automatically on GitHub Actions.
+- Test offline VST3 rendering, 64-channel layout negotiation, and parameter-state restoration on both platforms.
+- Publish tested downloads, checksums, and notes automatically for matching stable version tags, with a manual rebuild option.
+
 ## 1.1.0 — 2026-11-10
 
 - Add macOS Audio Unit and VST3 builds, distributed as universal Apple Silicon/Intel bundles.

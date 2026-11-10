@@ -1,0 +1,151 @@
+name: Build plugins
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag, or commit to build'
+        required: true
+        default: main
+      publish_release:
+        description: 'Publish/update release assets (ref must be a stable version tag)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: '1'
+
+concurrency:
+  group: plugins-${{ github.event_name }}-${{ inputs.ref || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: Windows-x64
+          - os: macos-15
+            platform: macOS-universal
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source to build
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          path: plugin
+          sparse-checkout: |
+            source
+            tests
+          persist-credentials: false
+      - name: Check out workflow tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: tooling
+          sparse-checkout: |
+            .github
+            tests
+          persist-credentials: false
+      - name: Check out pinned JUCE
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: juce-framework/JUCE
+          ref: dabd5ad13cd869cba41046947fffc8e5ce5cd662 # 8.0.17-security
+          path: JUCE
+          persist-credentials: false
+      - name: Test release guards
+        run: python -m unittest discover -s tooling/.github/scripts -p test_publish.py -v
+      - name: Configure Windows x64
+        if: runner.os == 'Windows'
+        run: |
+          cmake -S plugin -B build -A x64 -DJUCE_SOURCE_DIR="$GITHUB_WORKSPACE/JUCE" -DTVFDN_FORMATS=VST3
+          cmake -S tooling/tests/vst3-host -B host-build -A x64 -DJUCE_SOURCE_DIR="$GITHUB_WORKSPACE/JUCE"
+      - name: Configure universal macOS and native test host
+        if: runner.os == 'macOS'
+        run: |
+          cmake -S plugin -B build -DCMAKE_BUILD_TYPE=Release -DJUCE_SOURCE_DIR="$GITHUB_WORKSPACE/JUCE" '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+          cmake -S tooling/tests/vst3-host -B host-build -DCMAKE_BUILD_TYPE=Release -DJUCE_SOURCE_DIR="$GITHUB_WORKSPACE/JUCE"
+      - name: Build plugins and offline VST3 test host
+        run: |
+          cmake --build build --config Release --parallel 2
+          cmake --build host-build --config Release --parallel 2
+      - name: Sign macOS bundles
+        if: runner.os == 'macOS'
+        run: |
+          codesign --force --sign - 'build/TVFDN_artefacts/Release/AU/TVFDN 64.component'
+          codesign --force --sign - 'build/TVFDN_artefacts/Release/VST3/TVFDN 64.vst3'
+      - name: Test VST3 state, channel layout, and rendering
+        env:
+          TVFDN_VST3_PATH: ${{ github.workspace }}/build/TVFDN_artefacts/Release/VST3/TVFDN 64.vst3
+        run: ctest --test-dir host-build -C Release --output-on-failure
+      - name: Validate AU and channel-64 impulse rendering
+        if: runner.os == 'macOS'
+        run: |
+          ctest --test-dir build -C Release --output-on-failure
+          mkdir -p "$HOME/Library/Audio/Plug-Ins/Components"
+          ditto 'build/TVFDN_artefacts/Release/AU/TVFDN 64.component' "$HOME/Library/Audio/Plug-Ins/Components/TVFDN 64.component"
+          auval -v aufx Tv64 Tvfn -strict
+          clang++ -std=c++17 plugin/tests/au-smoke.cpp -framework AudioToolbox -o au-smoke
+          ./au-smoke
+      - name: Package tested builds
+        run: python tooling/.github/scripts/package.py plugin build dist
+      - name: Upload plugin downloads
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: plugins-${{ matrix.platform }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload test diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-logs-${{ matrix.platform }}
+          path: |
+            build/Testing/Temporary/LastTest.log
+            host-build/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
+
+  publish:
+    name: Publish tested release downloads
+    needs: build
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish_release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out publishing tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          sparse-checkout: .github
+          persist-credentials: false
+      - name: Download both tested builds
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: plugins-*
+          path: dist
+          merge-multiple: true
+      - name: Publish release assets, checksums, and notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_REF: ${{ inputs.ref || github.ref }}
+        run: python .github/scripts/publish.py dist

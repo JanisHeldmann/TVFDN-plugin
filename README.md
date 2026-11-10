@@ -7,6 +7,14 @@ Download the macOS AU and VST3 builds from [Releases](https://github.com/JanisHe
 
 See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
+## Automatic builds and releases
+
+[Build plugins](https://github.com/JanisHeldmann/TVFDN-plugin/actions/workflows/plugins.yml) builds Windows x64 VST3 and universal macOS AU/VST3 on pushes to `main` and pull requests. Downloads are available as workflow artifacts for 30 days. Both platforms run offline VST3 layout, channel-64 impulse, and eight-parameter state tests; macOS also runs the AU tests and Apple's validator. This does not replace testing in a Windows DAW or with the physical audio system.
+
+To publish a release, update the CMake version and changelog, commit them, and push a matching stable tag such as `v1.2.0`. After both platforms pass, Actions creates/updates the GitHub release with all three plugin ZIPs, checksums, and notes. The tag must match the CMake version and the exact source commit used for both builds. No release is published from a pull request or an ordinary branch push. Automatic publishing updates the release notes and makes that version the latest stable release.
+
+For an existing release, choose **Actions → Build plugins → Run workflow**, leave the workflow branch as `main`, enter the version tag in **ref**, and select **publish_release**. Workflow tooling is checked out separately so old source tags can be rebuilt without changing the tags. Leaving **publish_release** off produces downloadable artifacts only. Build jobs have read-only repository access; release-write access is limited to the publishing job. macOS downloads remain ad-hoc signed rather than Developer ID signed/notarized.
+
 The source code is available in the `./source/` folder.
 
 ## Building VST3 and Audio Unit
