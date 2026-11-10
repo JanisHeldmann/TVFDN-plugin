@@ -3,7 +3,9 @@
 
 ---
 
-The compiled versions (.dll and .vst) can be downloaded in the *Releases* section.
+Download the macOS AU and VST3 builds from [Releases](https://github.com/JanisHeldmann/TVFDN-plugin/releases). Legacy VST2 downloads remain available in the v1.0.0-beta release.
+
+See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
 The source code is available in the `./source/` folder.
 

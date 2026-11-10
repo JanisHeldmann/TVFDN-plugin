@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(TVFDN VERSION 1.0.0 LANGUAGES C CXX)
+project(TVFDN VERSION 1.1.0 LANGUAGES C CXX)
 
 set(JUCE_SOURCE_DIR "" CACHE PATH "Path to a JUCE checkout (tested with 8.0.17-security)")
 if(NOT EXISTS "${JUCE_SOURCE_DIR}/CMakeLists.txt")
