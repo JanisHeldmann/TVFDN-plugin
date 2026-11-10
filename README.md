@@ -27,7 +27,7 @@ cmake -S . -B build -DJUCE_SOURCE_DIR=../JUCE -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release --parallel
 ```
 
-On macOS, Xcode's command-line tools must be selected. Add `'-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0` to the configure command for a universal build. On Windows, use a Visual Studio C++ developer environment; the Windows build has not been validated here. To select formats explicitly, pass e.g. `-DTVFDN_FORMATS=VST3` at configure time.
+On macOS, Xcode's command-line tools must be selected. Add `'-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0` to the configure command for a universal build. On Windows, use a Visual Studio C++ developer environment. Windows x64 compilation and offline VST3 checks are covered by GitHub Actions; DAW playback still needs a Windows host check. To select formats explicitly, pass e.g. `-DTVFDN_FORMATS=VST3` at configure time.
 
 Plugins are written under `build/TVFDN_artefacts/Release/`; they are not installed automatically. For local macOS use, ad-hoc sign each bundle with `codesign --force --sign - "path/to/bundle"`, then copy the `.vst3` to `~/Library/Audio/Plug-Ins/VST3/` and the `.component` to `~/Library/Audio/Plug-Ins/Components/`. Restart/rescan the host after installation. Distribution signing/notarization is separate.
 
