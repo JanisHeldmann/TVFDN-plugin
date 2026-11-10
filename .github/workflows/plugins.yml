@@ -99,7 +99,18 @@ jobs:
           ctest --test-dir build -C Release --output-on-failure
           sudo mkdir -p /Library/Audio/Plug-Ins/Components
           sudo ditto 'build/TVFDN_artefacts/Release/AU/TVFDN 64.component' '/Library/Audio/Plug-Ins/Components/TVFDN 64.component'
-          killall AudioComponentRegistrar || true
+          sudo killall -9 AudioComponentRegistrar || true
+          for attempt in {1..15}; do
+            auval -l > au-components.txt
+            if grep -q 'aufx Tv64 Tvfn' au-components.txt; then
+              break
+            fi
+            sleep 2
+          done
+          cat au-components.txt
+          grep -q 'aufx Tv64 Tvfn' au-components.txt
+          sleep 2
+          auval -v aufx Tv64 Tvfn -strict
           auval -v aufx Tv64 Tvfn -strict
           clang++ -std=c++17 plugin/tests/au-smoke.cpp -framework AudioToolbox -o au-smoke
           ./au-smoke
@@ -120,6 +131,7 @@ jobs:
           path: |
             build/Testing/Temporary/LastTest.log
             host-build/Testing/Temporary/LastTest.log
+            au-components.txt
           if-no-files-found: ignore
 
   publish:
