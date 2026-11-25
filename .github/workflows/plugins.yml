@@ -89,9 +89,20 @@ jobs:
         run: |
           codesign --force --sign - 'build/TVFDN_artefacts/Release/AU/TVFDN 64.component'
           codesign --force --sign - 'build/TVFDN_artefacts/Release/VST3/TVFDN 64.vst3'
+      - name: Sign stereo macOS bundles
+        if: runner.os == 'macOS' && hashFiles('build/TVFDNStereo_artefacts/**') != ''
+        run: |
+          codesign --force --sign - 'build/TVFDNStereo_artefacts/Release/AU/TVFDN Stereo.component'
+          codesign --force --sign - 'build/TVFDNStereo_artefacts/Release/VST3/TVFDN Stereo.vst3'
       - name: Test VST3 state, channel layout, and rendering
         env:
           TVFDN_VST3_PATH: ${{ github.workspace }}/build/TVFDN_artefacts/Release/VST3/TVFDN 64.vst3
+        run: ctest --test-dir host-build -C Release --output-on-failure
+      - name: Test stereo VST3 mapping and state
+        if: hashFiles('build/TVFDNStereo_artefacts/**') != ''
+        env:
+          TVFDN_VST3_PATH: ${{ github.workspace }}/build/TVFDNStereo_artefacts/Release/VST3/TVFDN Stereo.vst3
+          TVFDN_VST3_REFERENCE_PATH: ${{ github.workspace }}/build/TVFDN_artefacts/Release/VST3/TVFDN 64.vst3
         run: ctest --test-dir host-build -C Release --output-on-failure
       - name: Validate AU and channel-64 impulse rendering
         if: runner.os == 'macOS'
@@ -99,10 +110,13 @@ jobs:
           ctest --test-dir build -C Release --output-on-failure
           sudo mkdir -p /Library/Audio/Plug-Ins/Components
           sudo ditto 'build/TVFDN_artefacts/Release/AU/TVFDN 64.component' '/Library/Audio/Plug-Ins/Components/TVFDN 64.component'
+          if [[ -d build/TVFDNStereo_artefacts ]]; then
+            sudo ditto 'build/TVFDNStereo_artefacts/Release/AU/TVFDN Stereo.component' '/Library/Audio/Plug-Ins/Components/TVFDN Stereo.component'
+          fi
           sudo killall -9 AudioComponentRegistrar || true
           for attempt in {1..15}; do
             auval -l > au-components.txt
-            if grep -q 'aufx Tv64 Tvfn' au-components.txt; then
+            if grep -q 'aufx Tv64 Tvfn' au-components.txt && { [[ ! -d build/TVFDNStereo_artefacts ]] || grep -q 'aufx TvSt Tvfn' au-components.txt; }; then
               break
             fi
             sleep 2
@@ -110,6 +124,10 @@ jobs:
           cat au-components.txt
           grep -q 'aufx Tv64 Tvfn' au-components.txt
           sleep 2
+          if [[ -d build/TVFDNStereo_artefacts ]]; then
+            grep -q 'aufx TvSt Tvfn' au-components.txt
+            auval -v aufx TvSt Tvfn -strict
+          fi
           auval -v aufx Tv64 Tvfn -strict
           auval -v aufx Tv64 Tvfn -strict
           clang++ -std=c++17 plugin/tests/au-smoke.cpp -framework AudioToolbox -o au-smoke

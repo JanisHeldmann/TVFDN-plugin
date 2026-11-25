@@ -36,10 +36,11 @@ def main():
         raise ValueError("Artifacts do not match the published source tag")
     version = tag[1:]
     files = sorted(directory.glob("*.zip"))
-    expected = {f"TVFDN-{version}-macOS-universal-AU.zip", f"TVFDN-{version}-macOS-universal-VST3.zip",
-                f"TVFDN-{version}-Windows-x64-VST3.zip"}
+    prefixes = ["TVFDN", "TVFDN-Stereo"] if any(path.name.startswith("TVFDN-Stereo-") for path in files) else ["TVFDN"]
+    expected = {f"{prefix}-{version}-{platform}-{kind}.zip" for prefix in prefixes
+                for platform, kind in [("macOS-universal", "AU"), ("macOS-universal", "VST3"), ("Windows-x64", "VST3")]}
     if {path.name for path in files} != expected:
-        raise ValueError("Expected exactly three plugin archives")
+        raise ValueError("Missing or unexpected plugin archives")
     checksum = directory / "SHA256SUMS.txt"
     checksum.write_text("".join(hashlib.sha256(path.read_bytes()).hexdigest() + "  " + path.name + "\n" for path in files))
     notes = directory / "release-notes.md"
@@ -48,14 +49,14 @@ def main():
 ## Downloads
 
 - macOS 11+: universal Apple Silicon/Intel AU and VST3 archives.
-- Windows x64: VST3 archive; extract `TVFDN 64.vst3` into `C:\\Program Files\\Common Files\\VST3\\`.
+- Windows x64: VST3 archives; extract the desired `.vst3` bundle into `C:\\Program Files\\Common Files\\VST3\\`.
 - Checksums: `SHA256SUMS.txt`. Source archives and [version history](https://github.com/{repository}/blob/{tag}/CHANGELOG.md) are available with this release.
 
-On macOS, extract the AU into `~/Library/Audio/Plug-Ins/Components/` and VST3 into `~/Library/Audio/Plug-Ins/VST3/`. The bundles are ad-hoc signed, not Developer ID signed or notarized; macOS may require approval to load downloaded files. Restart/rescan the host, select **TVFDN 64**, and configure 64 track channels with explicit output routing/downmixing.
+On macOS, extract the AU into `~/Library/Audio/Plug-Ins/Components/` and VST3 into `~/Library/Audio/Plug-Ins/VST3/`. The bundles are ad-hoc signed, not Developer ID signed or notarized; macOS may require approval to load downloaded files. Restart/rescan the host, select **TVFDN 64**, and configure 64 track channels with explicit output routing/downmixing. When stereo downloads are present, **TVFDN Stereo** instead exposes stereo input/output using channels 1/2 of the full FDN, with inputs 3–64 silent and no downmix or gain compensation.
 
 ## Automated validation
 
-Both platforms passed offline VST3 tests: 64-in/64-out layout, stereo rejection, finite nonzero channel-64 impulse response at 48 kHz, and all eight parameters restored in a fresh instance. The macOS AU passed its state round trip, strict Apple validation, and channel-64 impulse tests at 44.1/48/96 kHz. macOS runtime tests ran on {next(item['runtime'] for item in metadata if item['platform'] == 'macOS-universal')}; the universal bundle also contains Intel code.
+Both platforms passed offline VST3 tests: 64-in/64-out layout, stereo rejection, finite nonzero channel-64 impulse response at 48 kHz, and all eight parameters restored in a fresh instance. When included, the stereo variant also passed VST3 stereo mapping/state tests and AU state/strict validation. The macOS AU passed its state round trip, strict Apple validation, and channel-64 impulse tests at 44.1/48/96 kHz. macOS runtime tests ran on {next(item['runtime'] for item in metadata if item['platform'] == 'macOS-universal')}; the universal bundle also contains Intel code.
 
 These checks do not replace Windows DAW/playback testing or physical routing validation. Legacy VST2 binaries are unchanged and must remain installed for existing VST2 projects. Parameter state does not preserve the ringing tail. Use a fresh instance when changing sample rate; the existing first-call-only DSP preparation remains.
 

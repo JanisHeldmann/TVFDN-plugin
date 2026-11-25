@@ -15,17 +15,18 @@ static void check(OSStatus result, const char* operation)
 
 int main(int argc, char** argv)
 {
-    AudioComponentDescription description {'aufx', 'Tv64', 'Tvfn', 0, 0};
+    const bool stereo = argc == 3 && std::strcmp(argv[2], "stereo") == 0;
+    AudioComponentDescription description {'aufx', static_cast<OSType>(stereo ? 'TvSt' : 'Tv64'), 'Tvfn', 0, 0};
     AudioComponent component = nullptr;
     CFBundleRef bundle = nullptr;
-    if (argc == 2) {
+    if (argc >= 2) {
         auto url = CFURLCreateFromFileSystemRepresentation(nullptr,
             reinterpret_cast<const UInt8*>(argv[1]), std::strlen(argv[1]), true);
         bundle = CFBundleCreate(nullptr, url);
         CFRelease(url);
         if (!bundle || !CFBundleLoadExecutable(bundle)) return 1;
         auto factory = reinterpret_cast<AudioComponentFactoryFunction>(
-            CFBundleGetFunctionPointerForName(bundle, CFSTR("TVFDN_64AUFactory")));
+            CFBundleGetFunctionPointerForName(bundle, stereo ? CFSTR("TVFDN_StereoAUFactory") : CFSTR("TVFDN_64AUFactory")));
         if (!factory) return 1;
         component = AudioComponentRegister(&description, CFSTR("TVFDN state test"), 0x10000, factory);
     } else {

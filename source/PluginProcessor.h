@@ -367,7 +367,8 @@ public:
         {
             for (int IN = 0; IN < MyNumberOfInputs; ++IN)
             {
-                InSamples(0,IN) = block.getSample(IN, i);
+                // Stereo feeds channels 1-2; the remaining FDN inputs stay silent.
+                InSamples(0,IN) = IN < block.getNumChannels() ? block.getSample(IN, i) : 0.0f;
             }
             
             //InDelays = InSamples*InGains;
@@ -403,7 +404,7 @@ public:
             //OutSamples =  OutSamples+(DelayOutput*(OutGains));
             OutSamples = feedbackTV;
             
-            for (int OUT = 0; OUT < MyNumberOfOutputs; ++OUT)
+            for (int OUT = 0; OUT < block.getNumChannels(); ++OUT)
             {
                 block.setSample(OUT, i, OutSamples(0,OUT));
             }

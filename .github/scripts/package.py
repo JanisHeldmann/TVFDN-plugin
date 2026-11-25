@@ -18,23 +18,27 @@ mac = sys.platform == "darwin"
 system = "macOS-universal" if mac else "Windows-x64"
 if not mac and sys.platform != "win32":
     raise SystemExit("Unsupported packaging platform")
-for kind, extension in ([('AU', 'component'), ('VST3', 'vst3')] if mac else [('VST3', 'vst3')]):
-    bundle = build / "TVFDN_artefacts" / "Release" / kind / ("TVFDN 64." + extension)
-    if not bundle.exists():
-        raise SystemExit(f"Missing plugin: {bundle}")
-    archive = output / f"TVFDN-{version}-{system}-{kind}.zip"
-    if mac:
-        subprocess.run(["codesign", "--verify", "--verbose=2", str(bundle)], check=True)
-        subprocess.run(["lipo", str(bundle / "Contents/MacOS/TVFDN 64"), "-verify_arch", "arm64", "x86_64"], check=True)
-        subprocess.run(["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(bundle), str(archive)], check=True)
-    else:
-        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as stream:
-            for file in sorted(bundle.rglob("*")):
-                if file.is_file():
-                    stream.write(file, file.relative_to(bundle.parent).as_posix())
-    with zipfile.ZipFile(archive) as stream:
-        if stream.testzip() is not None:
-            raise SystemExit(f"Invalid archive: {archive}")
+variants = [("TVFDN", "TVFDN 64", "TVFDN")]
+if "add_tvfdn_plugin(TVFDNStereo " in (source / "CMakeLists.txt").read_text():
+    variants.append(("TVFDNStereo", "TVFDN Stereo", "TVFDN-Stereo"))
+for target, product, prefix in variants:
+    for kind, extension in ([('AU', 'component'), ('VST3', 'vst3')] if mac else [('VST3', 'vst3')]):
+        bundle = build / f"{target}_artefacts" / "Release" / kind / (product + "." + extension)
+        if not bundle.exists():
+            raise SystemExit(f"Missing plugin: {bundle}")
+        archive = output / f"{prefix}-{version}-{system}-{kind}.zip"
+        if mac:
+            subprocess.run(["codesign", "--verify", "--verbose=2", str(bundle)], check=True)
+            subprocess.run(["lipo", str(bundle / "Contents/MacOS" / product), "-verify_arch", "arm64", "x86_64"], check=True)
+            subprocess.run(["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(bundle), str(archive)], check=True)
+        else:
+            with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as stream:
+                for file in sorted(bundle.rglob("*")):
+                    if file.is_file():
+                        stream.write(file, file.relative_to(bundle.parent).as_posix())
+        with zipfile.ZipFile(archive) as stream:
+            if stream.testzip() is not None:
+                raise SystemExit(f"Invalid archive: {archive}")
 commit = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
 changes = []
 changelog = source / "CHANGELOG.md"

@@ -11,7 +11,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the version history.
 
 [Build plugins](https://github.com/JanisHeldmann/TVFDN-plugin/actions/workflows/plugins.yml) builds Windows x64 VST3 and universal macOS AU/VST3 on pushes to `main` and pull requests. Downloads are available as workflow artifacts for 30 days. Both platforms run offline VST3 layout, channel-64 impulse, and eight-parameter state tests; macOS also runs the AU tests and Apple's validator. This does not replace testing in a Windows DAW or with the physical audio system.
 
-To publish a release, update the CMake version and changelog, commit them, and push a matching stable tag such as `v1.2.0`. After both platforms pass, Actions creates/updates the GitHub release with all three plugin ZIPs, checksums, and notes. The tag must match the CMake version and the exact source commit used for both builds. No release is published from a pull request or an ordinary branch push. Automatic publishing updates the release notes and makes that version the latest stable release.
+To publish a release, update the CMake version and changelog, commit them, and push a matching stable tag such as `v1.2.0`. After both platforms pass, Actions creates/updates the GitHub release with both plugin variants, checksums, and notes. The tag must match the CMake version and the exact source commit used for both builds. No release is published from a pull request or an ordinary branch push. Automatic publishing updates the release notes and makes that version the latest stable release.
 
 For an existing release, choose **Actions → Build plugins → Run workflow**, leave the workflow branch as `main`, enter the version tag in **ref**, and select **publish_release**. Workflow tooling is checked out separately so old source tags can be rebuilt without changing the tags. Leaving **publish_release** off produces downloadable artifacts only. Build jobs have read-only repository access; release-write access is limited to the publishing job. macOS downloads remain ad-hoc signed rather than Developer ID signed/notarized.
 
@@ -29,13 +29,15 @@ cmake --build build --config Release --parallel
 
 On macOS, Xcode's command-line tools must be selected. Add `'-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64' -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0` to the configure command for a universal build. On Windows, use a Visual Studio C++ developer environment. Windows x64 compilation and offline VST3 checks are covered by GitHub Actions; DAW playback still needs a Windows host check. To select formats explicitly, pass e.g. `-DTVFDN_FORMATS=VST3` at configure time.
 
-Plugins are written under `build/TVFDN_artefacts/Release/`; they are not installed automatically. For local macOS use, ad-hoc sign each bundle with `codesign --force --sign - "path/to/bundle"`, then copy the `.vst3` to `~/Library/Audio/Plug-Ins/VST3/` and the `.component` to `~/Library/Audio/Plug-Ins/Components/`. Restart/rescan the host after installation. Distribution signing/notarization is separate.
+Plugins are written under `build/TVFDN_artefacts/Release/` and `build/TVFDNStereo_artefacts/Release/`; they are not installed automatically. For local macOS use, ad-hoc sign each bundle with `codesign --force --sign - "path/to/bundle"`, then copy the `.vst3` to `~/Library/Audio/Plug-Ins/VST3/` and the `.component` to `~/Library/Audio/Plug-Ins/Components/`. Restart/rescan the host after installation. Distribution signing/notarization is separate.
 
 These are new VST3/AU builds; the existing VST2 release assets are unchanged. The new plugin identity is **TVFDN 64** (`Tv64` / `Tvfn`), and VST2 replacement is disabled. Existing projects using the legacy VST2 must keep that plugin installed.
 
 ### Channels and project state
 
-The processor accepts **64 discrete inputs and 64 discrete outputs only**. Its DSP assumes 64 channels, so mono/stereo and other layouts are rejected. In REAPER, set the track channel count to 64 and check the plugin pin mapping. Stereo monitoring requires explicit output routing/downmixing.
+**TVFDN 64** accepts 64 discrete inputs and outputs. In REAPER, set the track channel count to 64 and check the plugin pin mapping. Stereo monitoring requires explicit output routing/downmixing.
+
+**TVFDN Stereo** accepts stereo input and output for GarageBand, Logic Pro stereo tracks, and other stereo hosts. Left/right feed FDN inputs 1/2, inputs 3–64 are zero, and FDN outputs 1/2 return as left/right. All 64 delay lines remain active; there is no downmix or added gain compensation. Mono and other layouts are rejected. Its separate identity (`TvSt` / `Tvfn`, bundle `org.tvfdn.pluginstereo`) allows both variants to coexist without replacing existing 64-channel instances.
 
 All eight processor parameters are saved/restored with plugin state. The ringing audio tail is not serialized, and projects saved with earlier builds cannot recover parameter values that those builds did not store. The existing DSP preparation runs only on the first `prepareToPlay` call; sample-rate changes within one instance remain outside this change.
 
@@ -51,11 +53,12 @@ After installing the AU, Apple's validator and the channel-64 impulse smoke test
 
 ```sh
 auval -v aufx Tv64 Tvfn -strict
+auval -v aufx TvSt Tvfn -strict
 clang++ -std=c++17 tests/au-smoke.cpp -framework AudioToolbox -o /tmp/tvfdn-au-smoke
 /tmp/tvfdn-au-smoke
 ```
 
-The smoke test checks finite, nonzero output at 44.1, 48, and 96 kHz. These checks do not validate physical audio routing.
+Both AU variants have eight-parameter state round-trip tests. The offline VST3 test checks both layouts and compares stereo samples with outputs 1/2 of the 64-channel variant driven only on inputs 1/2, including varying block sizes. The smoke test checks finite, nonzero 64-channel output at 44.1, 48, and 96 kHz. These checks do not validate physical audio routing.
 
 `tests/reaper-state-test.lua` tests VST3 state through a real REAPER project save and a fresh process reload. Run it only in an isolated REAPER instance/configuration, with `TVFDN_TEST_DIR` set to an existing scratch directory and `TVFDN_TEST_PHASE=write` or `read`. The write phase requires an empty project, creates a 64-channel track, changes all eight parameters, and saves `state-test.rpp` plus `expected.tsv`; the read phase must be launched with that project. Both phases write their result to `<phase>.log` and quit the test instance. The isolated configuration must include the built VST3 directory in the platform-specific VST search-path setting (`vstpath_arm64` on Apple Silicon, `vstpath64` on Windows x64). For example, on macOS (substitute absolute paths):
 

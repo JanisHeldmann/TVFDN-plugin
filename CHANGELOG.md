@@ -1,7 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 — 2026-11-25
 
+- Add a separate TVFDN Stereo AU/VST3 using inputs/outputs 1–2 of the full 64-delay FDN, with stereo mapping and parameter-state regression tests.
+- Keep TVFDN 64 installed alongside the stereo variant using separate AU/VST3 identities.
 - Build Windows x64 VST3 and universal macOS AU/VST3 automatically on GitHub Actions.
 - Test offline VST3 rendering, 64-channel layout negotiation, and parameter-state restoration on both platforms.
 - Publish tested downloads, checksums, and notes automatically for matching stable version tags, with a manual rebuild option.

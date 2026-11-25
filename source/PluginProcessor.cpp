@@ -9,6 +9,15 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+static juce::AudioChannelSet pluginChannels()
+{
+   #if TVFDN_STEREO
+    return juce::AudioChannelSet::stereo();
+   #else
+    return juce::AudioChannelSet::discreteChannels (64);
+   #endif
+}
+
 
 //==============================================================================
 GlivelabPlugin64AudioProcessor::GlivelabPlugin64AudioProcessor()
@@ -16,9 +25,9 @@ GlivelabPlugin64AudioProcessor::GlivelabPlugin64AudioProcessor()
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
-                       .withInput ("Input", juce::AudioChannelSet::discreteChannels(64), true)
+                       .withInput ("Input", pluginChannels(), true)
                       #endif
-                     .withOutput ("Output", juce::AudioChannelSet::discreteChannels(64), true)
+                     .withOutput ("Output", pluginChannels(), true)
                      #endif
                        )
 #endif
@@ -122,7 +131,7 @@ void GlivelabPlugin64AudioProcessor::releaseResources()
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool GlivelabPlugin64AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
-    const auto channels = juce::AudioChannelSet::discreteChannels (64);
+    const auto channels = pluginChannels();
     return layouts.getMainInputChannelSet() == channels
         && layouts.getMainOutputChannelSet() == channels;
 
